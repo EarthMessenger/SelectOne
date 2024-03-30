@@ -44,7 +44,10 @@ void MainWindow::handleFileSelectorButton()
     QStringList new_candidates;
     if (file.open(QIODevice::ReadOnly)) {
       while (!file.atEnd()) {
-        new_candidates.push_back(file.readLine());
+        QString line = file.readLine().trimmed();
+        if (!line.isEmpty()) {
+          new_candidates.push_back(line);
+        }
       }
     }
     candidates = std::move(new_candidates);
