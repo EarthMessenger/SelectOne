@@ -74,8 +74,11 @@ void MainWindow::setFile(QString fileName)
     }
   }
   candidates = std::move(new_candidates);
-  ui->numberOfPeopleSpinBox->setValue(1);
   ui->numberOfPeopleSpinBox->setRange(0, candidates.size());
+  if (!candidates.empty()) {
+    ui->numberOfPeopleSpinBox->setValue(
+        std::max(1, ui->numberOfPeopleSpinBox->value()));
+  }
   updateCandidateStatus();
 }
 
