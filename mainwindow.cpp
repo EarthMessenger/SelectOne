@@ -8,67 +8,90 @@
 #include <QString>
 #include <QStringList>
 #include <QTimer>
+#include <cassert>
+#include <qchar.h>
+#include <qglobal.h>
+#include <qobjectdefs.h>
+#include <qspinbox.h>
 
 MainWindow::MainWindow(QWidget *parent)
-  : QMainWindow(parent) , ui(new Ui::MainWindow), timer(new QTimer(this)), selecting(false)
+    : QMainWindow(parent), ui(new Ui::MainWindow), timer(new QTimer(this)),
+      selecting(false), numberOfPeople(0)
 {
   ui->setupUi(this);
 
   updateCandidateStatus();
   updateStartOrStopButton();
-  connect(ui->file_selector_button, &QPushButton::clicked, this, &MainWindow::handleFileSelectorButton);
-  connect(timer, &QTimer::timeout, this, QOverload<>::of(&MainWindow::updateCandidate));
-  connect(ui->start_or_stop_button, &QPushButton::clicked, this, &MainWindow::handleSelectionStartOrStop);
+
+  connect(ui->fileSelectorButton, &QPushButton::clicked, this,
+          &MainWindow::handleFileSelectorButton);
+  connect(timer, &QTimer::timeout, this,
+          QOverload<>::of(&MainWindow::updateCandidate));
+  connect(ui->startOrStopButton, &QPushButton::clicked, this,
+          &MainWindow::handleSelectionStartOrStop);
+  connect(ui->numberOfPeopleSpinBox, qOverload<int>(&QSpinBox::valueChanged),
+          this, &MainWindow::handleNumberOfPeopleChange);
 }
 
-MainWindow::~MainWindow()
-{
-  delete ui;
-}
+MainWindow::~MainWindow() { delete ui; }
 
 QString MainWindow::selectOne()
 {
-  if (candidates.empty()) return "";
-  if (candidates.size() > 1) {
-    std::swap(candidates[0],
-              candidates[QRandomGenerator::global()->bounded(0, candidates.size())]);
+  assert(0 <= numberOfPeople && numberOfPeople <= candidates.size());
+
+  for (int i = 0; i < numberOfPeople; i++) {
+    std::swap(
+        candidates[i],
+        candidates[QRandomGenerator::global()->bounded(i, candidates.size())]);
   }
-  return candidates[0];
+
+  QStringList result{ candidates.begin(), candidates.begin() + numberOfPeople };
+  return result.join("\n");
 }
 
 void MainWindow::handleFileSelectorButton()
 {
-  QString fileName = QFileDialog::getOpenFileName(this);
-  if (!fileName.isEmpty()) {
-    QFile file(fileName);
-    QStringList new_candidates;
-    if (file.open(QIODevice::ReadOnly)) {
-      while (!file.atEnd()) {
-        QString line = file.readLine().trimmed();
-        if (!line.isEmpty()) {
-          new_candidates.push_back(line);
-        }
-      }
+  QString file_name = QFileDialog::getOpenFileName(this);
+  if (!file_name.isEmpty()) setFile(file_name);
+}
+
+void MainWindow::setFile(QString file_name)
+{
+  QFile file(file_name);
+  QStringList new_candidates;
+  if (file.open(QIODevice::ReadOnly)) {
+    while (!file.atEnd()) {
+      QString line = file.readLine().trimmed();
+      if (!line.isEmpty()) new_candidates.push_back(line);
     }
-    candidates = std::move(new_candidates);
-    updateCandidateStatus();
   }
+  candidates = std::move(new_candidates);
+  ui->numberOfPeopleSpinBox->setValue(1);
+  ui->numberOfPeopleSpinBox->setRange(0, candidates.size());
+  updateCandidateStatus();
+}
+
+void MainWindow::handleNumberOfPeopleChange(int newValue)
+{
+  numberOfPeople = newValue;
 }
 
 void MainWindow::updateCandidateStatus()
 {
   if (candidates.empty()) {
-    ui->candidate_status->setText(QString("没有项目！"));
+    ui->candidateStatus->setText(QString("没有候选！"));
   } else {
-    ui->candidate_status->setText(QString("有 %1 个项目").arg(candidates.size()));
+    ui->candidateStatus->setText(
+        QString("有 %1 个候选").arg(candidates.size()));
   }
 }
 
-void MainWindow::updateStartOrStopButton() {
+void MainWindow::updateStartOrStopButton()
+{
   if (selecting) {
-    ui->start_or_stop_button->setText("停止");
+    ui->startOrStopButton->setText("停止");
   } else {
-    ui->start_or_stop_button->setText("开始");
+    ui->startOrStopButton->setText("开始");
   }
 }
 
@@ -83,7 +106,4 @@ void MainWindow::handleSelectionStartOrStop()
   updateStartOrStopButton();
 }
 
-void MainWindow::updateCandidate()
-{
-  ui->selected_candidate->setText(selectOne());
-}
+void MainWindow::updateCandidate() { ui->selectResult->setText(selectOne()); }

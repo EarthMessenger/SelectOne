@@ -6,6 +6,7 @@
 #include <QString>
 #include <QStringList>
 #include <QTimer>
+#include <qchar.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -27,6 +28,7 @@ private:
   QStringList candidates;
   QTimer *timer;
   bool selecting;
+  int numberOfPeople;
 
   QString selectOne();
 
@@ -35,5 +37,7 @@ private:
   void updateStartOrStopButton();
   void updateCandidate();
   void handleSelectionStartOrStop();
+  void setFile(QString fileName);
+  void handleNumberOfPeopleChange(int);
 };
 #endif // MAINWINDOW_H
