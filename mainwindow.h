@@ -7,6 +7,8 @@
 #include <QStringList>
 #include <QTimer>
 #include <qchar.h>
+#include <qevent.h>
+#include <qwidget.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -39,5 +41,8 @@ private:
   void handleSelectionStartOrStop();
   void setFile(QString fileName);
   void handleNumberOfPeopleChange(int);
+
+  void dragEnterEvent(QDragEnterEvent *event);
+  void dropEvent(QDropEvent *event);
 };
 #endif // MAINWINDOW_H

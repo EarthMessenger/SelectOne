@@ -1,8 +1,11 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
+#include <QDebug>
+#include <QDrag>
 #include <QFile>
 #include <QFileDialog>
+#include <QMimeData>
 #include <QPushButton>
 #include <QRandomGenerator>
 #include <QString>
@@ -10,9 +13,12 @@
 #include <QTimer>
 #include <cassert>
 #include <qchar.h>
+#include <qdebug.h>
+#include <qevent.h>
 #include <qglobal.h>
 #include <qobjectdefs.h>
 #include <qspinbox.h>
+#include <qwidget.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), timer(new QTimer(this)),
@@ -31,6 +37,8 @@ MainWindow::MainWindow(QWidget *parent)
           &MainWindow::handleSelectionStartOrStop);
   connect(ui->numberOfPeopleSpinBox, qOverload<int>(&QSpinBox::valueChanged),
           this, &MainWindow::handleNumberOfPeopleChange);
+
+  setAcceptDrops(true);
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -55,9 +63,9 @@ void MainWindow::handleFileSelectorButton()
   if (!file_name.isEmpty()) setFile(file_name);
 }
 
-void MainWindow::setFile(QString file_name)
+void MainWindow::setFile(QString fileName)
 {
-  QFile file(file_name);
+  QFile file(fileName);
   QStringList new_candidates;
   if (file.open(QIODevice::ReadOnly)) {
     while (!file.atEnd()) {
@@ -107,3 +115,17 @@ void MainWindow::handleSelectionStartOrStop()
 }
 
 void MainWindow::updateCandidate() { ui->selectResult->setText(selectOne()); }
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+  if (event->mimeData()->hasUrls() &&
+      event->mimeData()->urls().front().isLocalFile()) {
+    event->acceptProposedAction();
+  }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+  const auto url = event->mimeData()->urls().front();
+  setFile(url.toLocalFile());
+}
