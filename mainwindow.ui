@@ -38,7 +38,7 @@
              <widget class="QLabel" name="selectResult">
               <property name="font">
                <font>
-                <pointsize>36</pointsize>
+                <pointsize>48</pointsize>
                </font>
               </property>
               <property name="text">
